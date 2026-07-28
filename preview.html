@@ -1,0 +1,46 @@
+<meta charset="utf-8">
+<title>Notepad Tab (preview)</title>
+<link rel="stylesheet" href="editor.css">
+<style>
+  #badge {
+    position: fixed;
+    bottom: 12px;
+    right: 14px;
+    font: 11px ui-monospace, monospace;
+    color: var(--faint);
+  }
+</style>
+
+<div id="calbar">
+  <span id="caltext"></span>
+  <button id="calgear" title="Calendar settings">&#9881;</button>
+</div>
+
+<button id="hidebtn" title="Hide notes">
+  <svg id="eyeopen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+  <svg id="eyeshut" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/><line x1="4" y1="4" x2="20" y2="20"/></svg>
+</button>
+<div id="calpanel" hidden>
+  <textarea id="calurl" rows="4" placeholder="Paste your Google Calendar secret iCal URLs, one per line"></textarea>
+  <button id="calsave">Save</button>
+  <p class="hint">Google Calendar &rarr; Settings &rarr; each calendar &rarr; "Secret address in iCal format". One URL per line. Leave empty to hide.</p>
+</div>
+
+<div id="agenda" hidden>
+  <h2>today</h2>
+  <ul id="agendalist"></ul>
+  <h2 id="tmrwhead" hidden>tomorrow</h2>
+  <ul id="agendalist2"></ul>
+  <p id="agendanote"></p>
+</div>
+
+<div id="wrap">
+  <textarea id="pad" spellcheck="false" placeholder="- todo"></textarea>
+</div>
+
+<span id="badge">preview &middot; notes stored in localStorage</span>
+
+<script src="preview-shim.js"></script>
+<script src="editor.js"></script>
+<script src="privacy.js"></script>
+<script src="cal.js"></script>

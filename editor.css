@@ -1,0 +1,184 @@
+:root {
+  color-scheme: light dark;
+  --bg: #262624;
+  --fg: #ebe9e2;
+  --dim: #b0aea6;
+  --faint: #55534e;
+  --accent: #d97757;
+  --border: #444;
+  --panel: #302f2c;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #ffffff;
+    --fg: #1e293b;
+    --dim: #64748b;
+    --faint: #94a3b8;
+    --accent: #2563eb;
+    --border: #cbd5e1;
+    --panel: #f1f5f9;
+  }
+}
+
+* { box-sizing: border-box; margin: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+#wrap {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+}
+
+#pad {
+  width: min(720px, 90vw);
+  height: 100%;
+  padding: 8vh 0 10vh;
+  background: transparent;
+  color: var(--fg);
+  border: none;
+  outline: none;
+  resize: none;
+  font: inherit;
+  font-size: 15px;
+  line-height: 1.7;
+  caret-color: var(--accent);
+}
+
+#pad::placeholder { color: var(--faint); }
+
+/* calendar bar */
+#calbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 18px 0;
+  min-height: 34px;
+  font-size: 13px;
+  color: var(--dim);
+}
+
+#caltext b { color: var(--accent); font-weight: 600; }
+
+#calgear {
+  background: none;
+  border: none;
+  color: var(--faint);
+  font-size: 15px;
+  cursor: pointer;
+  padding: 2px;
+}
+#calgear:hover { color: var(--fg); }
+
+#calpanel {
+  position: absolute;
+  top: 44px;
+  right: 18px;
+  width: 340px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 12px;
+  z-index: 10;
+}
+#calpanel textarea {
+  width: 100%;
+  padding: 6px 8px;
+  background: var(--bg);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  font: inherit;
+  font-size: 11px;
+  resize: vertical;
+  margin-bottom: 8px;
+}
+#calpanel button {
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  border-radius: 5px;
+  padding: 5px 14px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.hint { color: var(--dim); margin-top: 8px; line-height: 1.5; }
+
+/* today's agenda sidebar */
+#agenda {
+  position: fixed;
+  top: 72px;
+  right: 28px;
+  width: 250px;
+  font-size: 12.5px;
+  color: var(--dim);
+}
+#agenda h2 {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--faint);
+  margin-bottom: 10px;
+}
+#agenda h2:not(:first-child) { margin-top: 18px; }
+#agenda ul {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+#agenda li { display: flex; gap: 10px; line-height: 1.4; }
+#agenda .t {
+  width: 62px;
+  flex-shrink: 0;
+  text-align: right;
+  color: var(--dim);
+  font-variant-numeric: tabular-nums;
+}
+#agenda li.past { opacity: 0.45; }
+#agenda li.empty { color: var(--faint); }
+#agenda li.next .title { color: var(--fg); }
+#agenda li.next .t { color: var(--accent); }
+#agendanote { margin-top: 10px; font-size: 11px; color: var(--faint); }
+@media (max-width: 1220px) { #agenda { display: none; } }
+
+/* hide-for-screen-sharing eye */
+#hidebtn {
+  position: fixed;
+  left: 14px;
+  bottom: 14px;
+  background: none;
+  border: none;
+  color: var(--faint);
+  cursor: pointer;
+  padding: 4px;
+  z-index: 20;
+}
+#hidebtn:hover { color: var(--fg); }
+#hidebtn svg { width: 18px; height: 18px; display: block; }
+body.veiled #eyeopen { display: none; }
+body:not(.veiled) #eyeshut { display: none; }
+
+body.veiled #wrap,
+body.veiled #agenda,
+body.veiled #calbar {
+  visibility: hidden;
+}
+
+/* popup sizing */
+body.popup { width: 380px; height: 500px; }
+body.popup #pad { width: 100%; padding: 14px 16px; font-size: 13px; }
