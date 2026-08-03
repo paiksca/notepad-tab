@@ -130,15 +130,44 @@ function startOfDay(d) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
 }
 
-// --- iCal parsing (best effort: TZID times treated as local time) ---
+// --- iCal parsing ---
 
-function parseICalDate(val) {
+// UTC-vs-wall-clock difference for an IANA timezone at a given moment
+function tzOffset(tz, date) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: tz, hour12: false,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+  }).formatToParts(date);
+  const v = {};
+  for (const p of parts) if (p.type !== 'literal') v[p.type] = +p.value;
+  return Date.UTC(v.year, v.month - 1, v.day, v.hour % 24, v.minute, v.second) - date.getTime();
+}
+
+// wall-clock [y, month0, d, h, mi, s] in tz → absolute Date; null if tz is unknown
+function fromZoned(p, tz) {
+  try {
+    const wall = Date.UTC(p[0], p[1], p[2], p[3], p[4], p[5]);
+    let ts = wall - tzOffset(tz, new Date(wall));
+    ts = wall - tzOffset(tz, new Date(ts)); // second pass converges across DST edges
+    return new Date(ts);
+  } catch {
+    return null;
+  }
+}
+
+function parseICalDate(val, tzid) {
   let m;
   if ((m = val.match(/^(\d{4})(\d{2})(\d{2})$/)))
     return { d: new Date(+m[1], +m[2] - 1, +m[3]), allDay: true };
   if ((m = val.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})(Z?)$/))) {
     const p = [+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]];
-    return { d: m[7] ? new Date(Date.UTC(...p)) : new Date(...p), allDay: false };
+    if (m[7]) return { d: new Date(Date.UTC(...p)), allDay: false };
+    if (tzid) {
+      const d = fromZoned(p, tzid);
+      if (d) return { d, allDay: false, wall: { h: p[3], mi: p[4], s: p[5], tz: tzid } };
+    }
+    return { d: new Date(...p), allDay: false };
   }
   return null;
 }
@@ -153,18 +182,19 @@ function parseICS(text) {
     if (!ev) continue;
     const i = line.indexOf(':');
     if (i < 0) continue;
-    const name = line.slice(0, i).split(';')[0];
+    const [name, ...params] = line.slice(0, i).split(';');
+    const tzid = params.find((p) => p.startsWith('TZID='))?.slice(5);
     const val = line.slice(i + 1);
     if (name === 'SUMMARY') {
       ev.summary = val.replace(/\\([,;nN])/g, (_, c) => (c === ',' || c === ';') ? c : ' ');
     } else if (name === 'DTSTART') {
-      const p = parseICalDate(val);
-      if (p) { ev.start = p.d; ev.allDay = p.allDay; }
+      const p = parseICalDate(val, tzid);
+      if (p) { ev.start = p.d; ev.allDay = p.allDay; ev.wall = p.wall; }
     } else if (name === 'RRULE') {
       ev.rrule = Object.fromEntries(val.split(';').map((s) => s.split('=')));
     } else if (name === 'EXDATE') {
       for (const v of val.split(',')) {
-        const p = parseICalDate(v);
+        const p = parseICalDate(v, tzid);
         if (p) ev.exdates.add(p.d.getTime());
       }
     } else if (name === 'STATUS' && val === 'CANCELLED') {
@@ -172,7 +202,7 @@ function parseICS(text) {
     } else if (name === 'UID') {
       ev.uid = val;
     } else if (name === 'RECURRENCE-ID') {
-      const p = parseICalDate(val);
+      const p = parseICalDate(val, tzid);
       if (p) ev.recurrenceId = p.d.getTime();
     }
   }
@@ -190,6 +220,17 @@ function parseICS(text) {
     }
   }
   return events.filter((e) => e.start && e.summary && !e.cancelled);
+}
+
+// occurrence on calendar day (y, month0, d) at the event's start time,
+// resolved through the event's own timezone when it has one
+function atTimeOf(ev, y, mo, d) {
+  if (ev.wall) {
+    const t = fromZoned([y, mo, d, ev.wall.h, ev.wall.mi, ev.wall.s], ev.wall.tz);
+    if (t) return t;
+  }
+  const s = ev.start;
+  return new Date(y, mo, d, s.getHours(), s.getMinutes(), s.getSeconds());
 }
 
 // walk occurrences forward from DTSTART; collect every one inside [from, to]
@@ -219,7 +260,7 @@ function occurrencesBetween(ev, from, to) {
       if (!byday.includes(d.getDay())) continue;
       const weeks = Math.round((startOfDay(d) - d.getDay() * DAY - week0) / (7 * DAY));
       if (weeks % interval !== 0) continue;
-      const t = new Date(d.getFullYear(), d.getMonth(), d.getDate(), s.getHours(), s.getMinutes(), s.getSeconds());
+      const t = atTimeOf(ev, d.getFullYear(), d.getMonth(), d.getDate());
       if (t < s) continue;
       if (stop(t)) break;
       count--;
@@ -228,9 +269,9 @@ function occurrencesBetween(ev, from, to) {
     return out;
   }
 
-  const step = { DAILY: (k) => new Date(s.getTime() + k * interval * DAY),
-                 MONTHLY: (k) => new Date(s.getFullYear(), s.getMonth() + k * interval, s.getDate(), s.getHours(), s.getMinutes(), s.getSeconds()),
-                 YEARLY: (k) => new Date(s.getFullYear() + k * interval, s.getMonth(), s.getDate(), s.getHours(), s.getMinutes(), s.getSeconds()) }[r.FREQ];
+  const step = { DAILY: (k) => atTimeOf(ev, s.getFullYear(), s.getMonth(), s.getDate() + k * interval),
+                 MONTHLY: (k) => atTimeOf(ev, s.getFullYear(), s.getMonth() + k * interval, s.getDate()),
+                 YEARLY: (k) => atTimeOf(ev, s.getFullYear() + k * interval, s.getMonth(), s.getDate()) }[r.FREQ];
   if (!step) return out;
   for (let k = 0; k < 20000 && count > 0; k++, count--) {
     const t = step(k);
