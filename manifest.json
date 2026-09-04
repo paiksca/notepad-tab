@@ -2,9 +2,13 @@
   "manifest_version": 3,
   "name": "Notepad Tab",
   "version": "1.0",
-  "description": "Every new tab is your todo notepad. Persists forever.",
-  "permissions": ["storage"],
-  "host_permissions": ["https://calendar.google.com/*"],
+  "description": "Every new tab is a notepad, with an optional agenda from your Google Calendar.",
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "https://calendar.google.com/*"
+  ],
   "chrome_url_overrides": {
     "newtab": "newtab.html"
   },

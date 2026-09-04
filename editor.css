@@ -1,9 +1,10 @@
+/* black, white and orange; the dark theme warms the black and lightens the orange */
 :root {
   color-scheme: light dark;
   --bg: #262624;
   --fg: #ebe9e2;
   --dim: #b0aea6;
-  --faint: #55534e;
+  --faint: #7d7a72;
   --accent: #d97757;
   --border: #444;
   --panel: #302f2c;
@@ -12,12 +13,12 @@
 @media (prefers-color-scheme: light) {
   :root {
     --bg: #ffffff;
-    --fg: #1e293b;
-    --dim: #64748b;
-    --faint: #94a3b8;
-    --accent: #2563eb;
-    --border: #cbd5e1;
-    --panel: #f1f5f9;
+    --fg: #1a1a1a;
+    --dim: #595959;
+    --faint: #8c8c8c;
+    --accent: #bf4f1f;
+    --border: #d4d4d4;
+    --panel: #f5f5f5;
   }
 }
 
@@ -182,3 +183,12 @@ body.veiled #calbar {
 /* popup sizing */
 body.popup { width: 380px; height: 500px; }
 body.popup #pad { width: 100%; padding: 14px 16px; font-size: 13px; }
+
+/* the popup pad runs full width, so the eye gets its own strip under it
+   instead of floating over the text the way it does on a new tab */
+body.popup #hidebtn {
+  position: static;
+  order: 1;
+  align-self: flex-start;
+  padding: 8px 16px 12px;
+}
