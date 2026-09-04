@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Notepad Tab",
   "version": "1.0",
-  "description": "Every new tab is a notepad, with an optional agenda from your Google Calendar.",
+  "description": "The new tab page is a notepad, with an optional agenda from your Google Calendar.",
   "permissions": [
     "storage"
   ],
